@@ -1,54 +1,21 @@
-
-import React, { useState, useMemo, useEffect } from 'react';
-import { databases, appwriteConfig } from '../lib/appwrite';
+import React, { useState, useMemo } from 'react';
 import { PLACEMENT_PROBLEMS } from '../constants';
 import { Problem, Difficulty } from '../types';
-import { Code, Filter, Search, ExternalLink, Loader2 } from 'lucide-react';
+import { Code, Filter, Search, ExternalLink } from 'lucide-react';
 
 const Placement: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCompany, setSelectedCompany] = useState<string>('All');
   const [selectedDifficulty, setSelectedDifficulty] = useState<string>('All');
-  const [problems, setProblems] = useState<Problem[]>([]);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    const fetchProblems = async () => {
-      try {
-        const response = await databases.listDocuments(
-          appwriteConfig.databaseId,
-          appwriteConfig.collectionIdPlacements
-        );
-        
-        const dbProblems = response.documents.map((doc: any) => ({
-          ...doc,
-          id: doc.$id
-        }));
-
-        if (dbProblems.length > 0) {
-          setProblems(dbProblems);
-        } else {
-          setProblems(PLACEMENT_PROBLEMS);
-        }
-      } catch (error) {
-        console.error("Failed to fetch placements from DB, using fallback.", error);
-        setProblems(PLACEMENT_PROBLEMS);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchProblems();
-  }, []);
 
   // Extract unique companies for filter
   const allCompanies = useMemo(() => {
     const companies = new Set<string>();
-    problems.forEach(p => p.companies.forEach(c => companies.add(c)));
+    PLACEMENT_PROBLEMS.forEach(p => p.companies.forEach(c => companies.add(c)));
     return ['All', ...Array.from(companies)];
-  }, [problems]);
+  }, []);
 
-  const filteredProblems = problems.filter((problem) => {
+  const filteredProblems = PLACEMENT_PROBLEMS.filter((problem) => {
     const matchesSearch = problem.title.toLowerCase().includes(searchTerm.toLowerCase()) || 
                           problem.topic.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesCompany = selectedCompany === 'All' || problem.companies.includes(selectedCompany);
@@ -57,7 +24,7 @@ const Placement: React.FC = () => {
     return matchesSearch && matchesCompany && matchesDifficulty;
   });
 
-  const getDifficultyColor = (diff: string) => {
+  const getDifficultyColor = (diff: Difficulty) => {
     switch (diff) {
       case Difficulty.EASY: return 'bg-green-100 text-green-800';
       case Difficulty.MEDIUM: return 'bg-yellow-100 text-yellow-800';
@@ -65,14 +32,6 @@ const Placement: React.FC = () => {
       default: return 'bg-slate-100 text-slate-800';
     }
   };
-
-  if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-slate-50">
-        <Loader2 className="animate-spin text-indigo-600" size={40} />
-      </div>
-    );
-  }
 
   return (
     <div className="min-h-screen bg-slate-50 py-12 px-4 sm:px-6 lg:px-8">
@@ -164,9 +123,9 @@ const Placement: React.FC = () => {
                       {problem.companies.slice(0, 2).join(', ')} {problem.companies.length > 2 && `+${problem.companies.length - 2}`}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                      <a href={problem.link} target="_blank" rel="noreferrer" className="text-indigo-600 hover:text-indigo-900 flex items-center justify-end ml-auto">
+                      <button className="text-indigo-600 hover:text-indigo-900 flex items-center justify-end ml-auto">
                         Solve <ExternalLink size={14} className="ml-1" />
-                      </a>
+                      </button>
                     </td>
                   </tr>
                 ))}

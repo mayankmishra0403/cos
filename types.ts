@@ -1,28 +1,17 @@
-
 import React from 'react';
-
-export interface User {
-  $id: string;
-  name: string;
-  email: string;
-  prefs?: Record<string, any>;
-}
 
 export interface Unit {
   id: number;
   title: string;
   description: string;
-  pdfLink?: string; // Added for PDF support
 }
 
-// Extended for DB storage where units might be stored as JSON string
 export interface Subject {
-  $id?: string;
-  id?: string;
+  id: string;
   name: string;
-  code: string; 
+  code: string; // e.g., KCS-401
   semester: number;
-  units: Unit[] | string; 
+  units: Unit[];
 }
 
 export enum Difficulty {
@@ -32,13 +21,12 @@ export enum Difficulty {
 }
 
 export interface Problem {
-  $id?: string;
-  id?: string;
+  id: string;
   title: string;
   difficulty: Difficulty;
   companies: string[];
   topic: string;
-  link: string;
+  link: string; // Mock link
 }
 
 export interface ChatMessage {
