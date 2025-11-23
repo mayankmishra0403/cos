@@ -156,7 +156,7 @@ const AITutor: React.FC = () => {
           </div>
           <div>
             <h1 className="text-2xl font-bold text-foreground">AI Tutor - Free for Everyone</h1>
-            <p className="text-sm text-muted-foreground mt-1">Powered by Llama 3.2 • Available 24/7 • No Login Required</p>
+            <p className="text-sm text-muted-foreground mt-1">Powered by DeepSeek • Available 24/7 • No Login Required</p>
           </div>
         </div>
       </div>

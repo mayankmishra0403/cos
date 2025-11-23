@@ -1,6 +1,6 @@
-// OpenRouter AI Service for AI Tutor
-const OPENROUTER_API_KEY = import.meta.env.VITE_OPENROUTER_API_KEY;
-const OPENROUTER_API_URL = 'https://openrouter.ai/api/v1/chat/completions';
+// DeepSeek AI Service for AI Tutor
+const DEEPSEEK_API_KEY = import.meta.env.VITE_DEEPSEEK_API_KEY;
+const DEEPSEEK_API_URL = 'https://api.deepseek.com/v1/chat/completions';
 
 interface Message {
   role: 'system' | 'user' | 'assistant';
@@ -138,18 +138,18 @@ export const sendMessageStream = async (message: string) => {
       return mockResponse;
     }
 
-    const response = await fetch(OPENROUTER_API_URL, {
+    const response = await fetch(DEEPSEEK_API_URL, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${OPENROUTER_API_KEY}`,
-        'HTTP-Referer': window.location.origin,
-        'X-Title': 'Code of Shiksha'
+        'Authorization': `Bearer ${DEEPSEEK_API_KEY}`,
       },
       body: JSON.stringify({
-        model: 'meta-llama/llama-3.2-3b-instruct:free',
+        model: 'deepseek-chat',
         messages: conversationHistory,
-        stream: true
+        stream: true,
+        temperature: 0.7,
+        max_tokens: 1000
       })
     });
 
@@ -162,7 +162,7 @@ export const sendMessageStream = async (message: string) => {
 
     return response;
   } catch (error) {
-    console.error("Error sending message to OpenRouter:", error);
+    console.error("Error sending message to DeepSeek:", error);
     throw error;
   }
 };
