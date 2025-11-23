@@ -95,7 +95,13 @@ const AITutor: React.FC = () => {
             
             try {
               const parsed = JSON.parse(data);
-              const content = parsed.choices?.[0]?.delta?.content;
+              // Try multiple response formats
+              let content = parsed.choices?.[0]?.delta?.content || // OpenRouter format
+                           parsed.output || // Bytez format
+                           parsed.generated_text || // Some models
+                           parsed.text || // Direct text
+                           parsed.response; // Alternative format
+              
               if (content) {
                 accumulatedText += content;
                 setMessages(prev => prev.map(msg => 
@@ -150,7 +156,7 @@ const AITutor: React.FC = () => {
           </div>
           <div>
             <h1 className="text-2xl font-bold text-foreground">AI Tutor - Free for Everyone</h1>
-            <p className="text-sm text-muted-foreground mt-1">Powered by Llama 3.2 • Available 24/7 • No Login Required</p>
+            <p className="text-sm text-muted-foreground mt-1">Powered by GPT-2 • Available 24/7 • No Login Required</p>
           </div>
         </div>
       </div>

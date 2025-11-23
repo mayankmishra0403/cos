@@ -1,6 +1,6 @@
-// OpenRouter AI Service for AI Tutor
-const OPENROUTER_API_KEY = import.meta.env.VITE_OPENROUTER_API_KEY;
-const OPENROUTER_API_URL = 'https://openrouter.ai/api/v1/chat/completions';
+// Bytez AI Service for AI Tutor
+const BYTEZ_API_KEY = import.meta.env.VITE_BYTEZ_API_KEY;
+const BYTEZ_API_URL = 'https://api.bytez.com/v1/models';
 
 interface Message {
   role: 'system' | 'user' | 'assistant';
@@ -138,17 +138,19 @@ export const sendMessageStream = async (message: string) => {
       return mockResponse;
     }
 
-    const response = await fetch(OPENROUTER_API_URL, {
+    const response = await fetch(`${BYTEZ_API_URL}/gpt2/run`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${OPENROUTER_API_KEY}`,
-        'HTTP-Referer': window.location.origin,
-        'X-Title': 'Code of Shiksha'
+        'Authorization': `Bearer ${BYTEZ_API_KEY}`,
       },
       body: JSON.stringify({
-        model: 'meta-llama/llama-3.2-3b-instruct:free',
-        messages: conversationHistory,
+        inputs: message,
+        parameters: {
+          max_length: 200,
+          temperature: 0.7,
+          do_sample: true,
+        },
         stream: true
       })
     });
@@ -162,7 +164,7 @@ export const sendMessageStream = async (message: string) => {
 
     return response;
   } catch (error) {
-    console.error("Error sending message to OpenRouter:", error);
+    console.error("Error sending message to Bytez:", error);
     throw error;
   }
 };
