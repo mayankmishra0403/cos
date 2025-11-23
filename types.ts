@@ -1,34 +1,5 @@
 import React from 'react';
 
-export interface Unit {
-  id: number;
-  title: string;
-  description: string;
-}
-
-export interface Subject {
-  id: string;
-  name: string;
-  code: string; // e.g., KCS-401
-  semester: number;
-  units: Unit[];
-}
-
-export enum Difficulty {
-  EASY = 'Easy',
-  MEDIUM = 'Medium',
-  HARD = 'Hard',
-}
-
-export interface Problem {
-  id: string;
-  title: string;
-  difficulty: Difficulty;
-  companies: string[];
-  topic: string;
-  link: string; // Mock link
-}
-
 export interface ChatMessage {
   id: string;
   role: 'user' | 'model';

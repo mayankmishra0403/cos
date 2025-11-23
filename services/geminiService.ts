@@ -1,36 +1,176 @@
-import { GoogleGenAI, Chat, GenerateContentResponse } from "@google/genai";
-import { SYSTEM_INSTRUCTION } from "../constants";
+// OpenRouter AI Service for AI Tutor
+const OPENROUTER_API_KEY = import.meta.env.VITE_OPENROUTER_API_KEY;
+const OPENROUTER_API_URL = 'https://openrouter.ai/api/v1/chat/completions';
 
-// Initialize Gemini Client
-// NOTE: In a real production app, you might proxy this through a backend to hide the key,
-// but for this React SPA demo, we use the env variable directly as per instructions.
-const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+interface Message {
+  role: 'system' | 'user' | 'assistant';
+  content: string;
+}
 
-let chatSession: Chat | null = null;
+let conversationHistory: Message[] = [];
+let responseCache: { [key: string]: string } = {};
 
-export const getChatSession = (): Chat => {
-  if (!chatSession) {
-    chatSession = ai.chats.create({
-      model: 'gemini-2.5-flash',
-      config: {
-        systemInstruction: SYSTEM_INSTRUCTION,
-      },
+// Local fallback responses for common questions
+const fallbackResponses: { [key: string]: string } = {
+  'hello': 'Hello! How can I help you with your AKTU studies today?',
+  'hi': 'Hi there! Ready to learn about computer science and programming?',
+  'what is programming': 'Programming is the process of creating instructions for computers to follow. It involves writing code in programming languages like C++, Java, Python, etc. to solve problems and create applications.',
+  'what is data structure': 'Data structures are ways of organizing and storing data so that it can be accessed and modified efficiently. Common data structures include arrays, linked lists, stacks, queues, trees, and graphs.',
+  'what is algorithm': 'An algorithm is a step-by-step procedure or formula for solving a problem. It\'s like a recipe that tells the computer exactly what to do to accomplish a specific task.',
+  'aktu syllabus': 'The AKTU (Dr. A.P.J. Abdul Kalam Technical University) syllabus for Computer Science includes subjects like Data Structures, Algorithms, Operating Systems, Database Management Systems, Computer Networks, and various programming languages.',
+  'c++ basics': 'C++ is an object-oriented programming language. Basic concepts include variables, data types, loops, functions, classes, and objects. Here\'s a simple "Hello World" program:\n\n#include <iostream>\nusing namespace std;\n\nint main() {\n    cout << "Hello World!" << endl;\n    return 0;\n}',
+  'python basics': 'Python is a high-level, interpreted programming language known for its simplicity. Basic concepts include variables, lists, dictionaries, loops, and functions. Here\'s a simple example:\n\nprint("Hello World!")\n\n# Variables\nname = "Student"\nprint(f"Hello, {name}!")',
+  'time complexity': 'Time complexity measures how the runtime of an algorithm grows as the input size increases. Common complexities include:\n- O(1): Constant time\n- O(log n): Logarithmic time\n- O(n): Linear time\n- O(n²): Quadratic time\n- O(2^n): Exponential time',
+  'space complexity': 'Space complexity measures the amount of memory an algorithm uses relative to the input size. It includes both auxiliary space and space used by input.',
+};
+
+function getFallbackResponse(message: string): string | null {
+  const lowerMessage = message.toLowerCase().trim();
+  
+  // Direct matches
+  if (fallbackResponses[lowerMessage]) {
+    return fallbackResponses[lowerMessage];
+  }
+  
+  // Partial matches
+  for (const [key, response] of Object.entries(fallbackResponses)) {
+    if (lowerMessage.includes(key)) {
+      return response;
+    }
+  }
+  
+  return null;
+}
+
+export const getChatSession = () => {
+  // Initialize with system instruction if empty
+  if (conversationHistory.length === 0) {
+    conversationHistory.push({
+      role: 'system',
+      content: `You are an expert AI tutor specialized in computer science, programming, data structures, algorithms, and AKTU syllabus. 
+      Provide clear, concise explanations with code examples when needed. Be helpful, friendly, and educational.
+      Help students understand concepts deeply, not just provide answers.`
     });
   }
-  return chatSession;
+  return conversationHistory;
 };
 
 export const sendMessageStream = async (message: string) => {
-  const chat = getChatSession();
   try {
-    const result = await chat.sendMessageStream({ message });
-    return result;
+    // Add user message to history
+    conversationHistory.push({
+      role: 'user',
+      content: message
+    });
+
+    // Check cache first
+    const cacheKey = message.toLowerCase().trim();
+    if (responseCache[cacheKey]) {
+      // Return cached response as mock stream
+      const mockResponse = {
+        body: {
+          getReader: () => {
+            let sent = false;
+            return {
+              read: async () => {
+                if (!sent) {
+                  sent = true;
+                  return {
+                    done: false,
+                    value: new TextEncoder().encode(
+                      `data: ${JSON.stringify({ choices: [{ delta: { content: responseCache[cacheKey] } }] })}\n\n`
+                    )
+                  };
+                } else {
+                  return { done: true, value: undefined };
+                }
+              }
+            };
+          }
+        }
+      };
+      
+      // Add cached response to history
+      conversationHistory.push({
+        role: 'assistant',
+        content: responseCache[cacheKey]
+      });
+      
+      return mockResponse;
+    }
+
+    // Check for local fallback response
+    const fallbackResponse = getFallbackResponse(message);
+    if (fallbackResponse) {
+      // Cache the fallback response
+      responseCache[cacheKey] = fallbackResponse;
+      
+      // Create a mock streaming response for fallback
+      const mockResponse = {
+        body: {
+          getReader: () => {
+            let sent = false;
+            return {
+              read: async () => {
+                if (!sent) {
+                  sent = true;
+                  return {
+                    done: false,
+                    value: new TextEncoder().encode(
+                      `data: ${JSON.stringify({ choices: [{ delta: { content: fallbackResponse } }] })}\n\n`
+                    )
+                  };
+                } else {
+                  return { done: true, value: undefined };
+                }
+              }
+            };
+          }
+        }
+      };
+      
+      // Add fallback response to history
+      conversationHistory.push({
+        role: 'assistant',
+        content: fallbackResponse
+      });
+      
+      return mockResponse;
+    }
+
+    const response = await fetch(OPENROUTER_API_URL, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${OPENROUTER_API_KEY}`,
+        'HTTP-Referer': window.location.origin,
+        'X-Title': 'Code of Shiksha'
+      },
+      body: JSON.stringify({
+        model: 'meta-llama/llama-3.2-3b-instruct:free',
+        messages: conversationHistory,
+        stream: true
+      })
+    });
+
+    if (!response.ok) {
+      if (response.status === 429) {
+        throw new Error('429');
+      }
+      throw new Error(`API request failed: ${response.statusText}`);
+    }
+
+    return response;
   } catch (error) {
-    console.error("Error sending message to Gemini:", error);
+    console.error("Error sending message to OpenRouter:", error);
     throw error;
   }
 };
 
 export const resetSession = () => {
-  chatSession = null;
+  conversationHistory = [];
+};
+
+export const cacheResponse = (key: string, response: string) => {
+  responseCache[key] = response;
 };
