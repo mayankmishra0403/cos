@@ -1,9 +1,10 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" class="scroll-smooth">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Code of Shiksha</title>
+    <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <style>
       body {
@@ -17,6 +18,14 @@
           -ms-overflow-style: none;
           scrollbar-width: none;
       }
+      /* Smooth transitions for layout changes */
+      .fade-enter {
+        opacity: 0;
+      }
+      .fade-enter-active {
+        opacity: 1;
+        transition: opacity 300ms ease-in;
+      }
     </style>
   <script type="importmap">
 {
@@ -27,12 +36,13 @@
     "@google/genai": "https://aistudiocdn.com/@google/genai@^1.30.0",
     "react-router-dom": "https://aistudiocdn.com/react-router-dom@^7.9.6",
     "lucide-react": "https://aistudiocdn.com/lucide-react@^0.554.0",
-    "react-markdown": "https://aistudiocdn.com/react-markdown@^10.1.0"
+    "react-markdown": "https://aistudiocdn.com/react-markdown@^10.1.0",
+    "appwrite": "https://aistudiocdn.com/appwrite@^21.4.0"
   }
 }
 </script>
 </head>
-  <body>
+  <body class="bg-slate-50 text-slate-900 antialiased selection:bg-indigo-100 selection:text-indigo-900">
     <div id="root"></div>
     <script type="module" src="/index.tsx"></script>
   </body>
